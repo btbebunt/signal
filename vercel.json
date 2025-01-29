@@ -1,6 +1,6 @@
 {
     "version": 2,
     "builds": [
-        { "src": "api/server.js", "use": "@vercel/node" }
+        { "src": "pages/api/trade.js", "use": "@vercel/node" }
     ]
 }
