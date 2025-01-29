@@ -1,5 +1,10 @@
 import axios from 'axios';
 
+// CORS 설정: 모든 도메인에서 접근을 허용
+res.setHeader('Access-Control-Allow-Origin', '*');  // 모든 도메인에서 접근 허용
+res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');  // 허용할 HTTP 메서드
+res.setHeader('Access-Control-Allow-Headers', 'Content-Type');  // 허용할 헤더
+
 const TELEGRAM_BOT_TOKEN = '7878265469:AAH8TxZeYpbsaox9KyhysyodRHvrrtPzcTQ';
 const CHAT_ID = '-4671349329';
 
