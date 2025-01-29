@@ -37,12 +37,15 @@ export default async function handler(req, res) {
     // CORS 설정: 모든 도메인에서 접근을 허용
     res.setHeader('Access-Control-Allow-Origin', '*');  // 모든 도메인에서 접근 허용
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');  // 허용할 HTTP 메서드
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');  // 허용할 헤더
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');  // 허용할 헤더
 
     // OPTIONS 메서드 처리 (CORS 요청을 위해)
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
+
+    console.log('req.method => ', req.method);
+    
 
     if (req.method === 'POST') {
         console.log('Received request:', req.body); // 요청 로그
