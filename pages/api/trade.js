@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 텔레그램 봇 설정
 const TELEGRAM_BOT_TOKEN = '7878265469:AAH8TxZeYpbsaox9KyhysyodRHvrrtPzcTQ';
-const CHAT_ID = '-4671349329';
+const CHAT_ID = '-4732207448';
 
 // 텔레그램 메시지 포맷 함수
 function createTelegramMessage(tradeData) {
