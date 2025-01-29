@@ -9,6 +9,7 @@ function createTelegramMessage(tradeData) {
     return `
 📊 *New Trade Alert* 📊
 ┌───────────────
+│ ▪ *Order*: ${tradeData.order || 'N/A'}
 │ ▪ *Type*: ${tradeData.type || 'N/A'}
 │ ▪ *Symbol*: ${tradeData.symbol || 'N/A'}
 │ ▪ *Volume*: ${tradeData.volume?.toFixed(2) || 0} lots
@@ -51,7 +52,7 @@ export default async function handler(req, res) {
         console.log('Received request:', req.body); // 요청 로그
 
         // 필수 필드 확인
-        const requiredFields = ['type', 'symbol', 'volume', 'price', 'profit'];
+        const requiredFields = ['order', 'type', 'symbol', 'volume', 'price', 'profit'];
         if (!requiredFields.every(field => field in req.body)) {
             return res.status(400).json({ error: 'Invalid trade data structure' });
         }
