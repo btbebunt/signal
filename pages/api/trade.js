@@ -1,10 +1,6 @@
 import axios from 'axios';
 
-// CORS 설정: 모든 도메인에서 접근을 허용
-res.setHeader('Access-Control-Allow-Origin', '*');  // 모든 도메인에서 접근 허용
-res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');  // 허용할 HTTP 메서드
-res.setHeader('Access-Control-Allow-Headers', 'Content-Type');  // 허용할 헤더
-
+// 텔레그램 봇 설정
 const TELEGRAM_BOT_TOKEN = '7878265469:AAH8TxZeYpbsaox9KyhysyodRHvrrtPzcTQ';
 const CHAT_ID = '-4671349329';
 
@@ -38,6 +34,16 @@ async function sendTelegramNotification(message) {
 
 // Vercel API 핸들러
 export default async function handler(req, res) {
+    // CORS 설정: 모든 도메인에서 접근을 허용
+    res.setHeader('Access-Control-Allow-Origin', '*');  // 모든 도메인에서 접근 허용
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');  // 허용할 HTTP 메서드
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');  // 허용할 헤더
+
+    // OPTIONS 메서드 처리 (CORS 요청을 위해)
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     if (req.method === 'POST') {
         console.log('Received request:', req.body); // 요청 로그
 
