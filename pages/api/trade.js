@@ -45,9 +45,9 @@ export default async function handler(req, res) {
     }
 
     console.log('req.method => ', req.method);
+    console.log('req.body => ', req.body);
     
-
-    if (req.method === 'POST') {
+    if (req.method == 'POST') {
         console.log('Received request:', req.body); // 요청 로그
 
         // 필수 필드 확인
