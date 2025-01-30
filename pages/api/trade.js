@@ -10,6 +10,8 @@ function createTelegramMessage(tradeData) {
 📊 *New Trade Alert* 📊
 ┌───────────────
 │ ▪ *Order*: ${tradeData.order || 'N/A'}
+│ ▪ *sl*: ${tradeData.sl?.toFixed(5) || 'N/A'}
+│ ▪ *tp*: ${tradeData.tp?.toFixed(5) || 'N/A'}
 │ ▪ *Type*: ${tradeData.type || 'N/A'}
 │ ▪ *Symbol*: ${tradeData.symbol || 'N/A'}
 │ ▪ *Volume*: ${tradeData.volume?.toFixed(2) || 0} lots
