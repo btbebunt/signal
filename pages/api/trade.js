@@ -54,7 +54,7 @@ export default async function handler(req, res) {
         console.log('Received request:', req.body); // 요청 로그
 
         // 필수 필드 확인
-        const requiredFields = ['order', 'type', 'symbol', 'volume', 'price', 'profit'];
+        const requiredFields = ['order', 'type', 'symbol', 'volume', 'price', 'profit', 'sl', 'tp'];
         if (!requiredFields.every(field => field in req.body)) {
             return res.status(400).json({ error: 'Invalid trade data structure' });
         }
