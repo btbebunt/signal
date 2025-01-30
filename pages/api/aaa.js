@@ -1,74 +1,91 @@
 import axios from 'axios';
+import { Client } from '@notionhq/client';
 
-// 텔레그램 봇 설정
-const TELEGRAM_BOT_TOKEN = '7878265469:AAH8TxZeYpbsaox9KyhysyodRHvrrtPzcTQ';
-const CHAT_ID = '-4729154457';
+// Notion 설정
+const notion = new Client({ auth: process.env.NOTION_API_KEY });
+const NOTION_DB_ID = '18bef7853245804aaf51c8cf80136722';
 
 // 텔레그램 메시지 포맷 함수
-function createTelegramMessage(tradeData) {
-    return `
-📊 *New Trade Alert* 📊
-┌───────────────
-│ ▪ *Order*: ${tradeData.order || 'N/A'}
-│ ▪ *Type*: ${tradeData.type || 'N/A'}
-│ ▪ *Symbol*: ${tradeData.symbol || 'N/A'}
-│ ▪ *Volume*: ${tradeData.volume?.toFixed(2) || 0} lots
-│ ▪ *Price*: ${tradeData.price?.toFixed(5) || 0}
-│ ▪ *Profit*: $${tradeData.profit?.toFixed(2) || 0}
-└───────────────
-`;
-}
+const createMessage = (data) => {
+  let msg = `📊 *${data.action.toUpperCase()} Order* 📊\n`;
+  msg += `┌───────────────\n`;
+  
+  // 액션별 메시지 구성
+  switch(data.action) {
+    case 'open':
+      msg += `│ ▪ Order: #${data.order}\n`;
+      msg += `│ ▪ Symbol: ${data.symbol}\n`;
+      msg += `│ ▪ Volume: ${data.volume.toFixed(2)} lots\n`;
+      msg += `│ ▪ Price: ${data.price.toFixed(5)}\n`;
+      msg += `│ ▪ SL: ${data.sl?.toFixed(5) || 'None'}\n`;
+      msg += `│ ▪ TP: ${data.tp?.toFixed(5) || 'None'}\n`;
+      break;
+      
+    case 'update':
+      msg += `│ ▪ Order: #${data.order}\n`;
+      msg += `│ ▪ New SL: ${data.sl?.toFixed(5) || 'None'}\n`;
+      msg += `│ ▪ New TP: ${data.tp?.toFixed(5) || 'None'}\n`;
+      break;
+      
+    case 'close':
+      msg += `│ ▪ Order: #${data.order}\n`;
+      msg += `│ ▪ Profit: $${data.profit.toFixed(2)}\n`;
+      break;
+  }
+  
+  msg += `│ ▪ Balance: $${data.balance.toFixed(2)}\n`;
+  msg += `└───────────────`;
+  return msg;
+};
 
-// 텔레그램 알림 전송 함수
-async function sendTelegramNotification(message) {
-    try {
-        await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-            chat_id: CHAT_ID,
-            text: message,
-            parse_mode: 'Markdown', // Markdown 형식 지원
-        });
-    } catch (error) {
-        console.error('Telegram notification failed:', error.response?.data || error.message);
-        throw error;
-    }
-}
+// Notion 데이터베이스 업데이트
+const updateNotion = async (data) => {
+  const properties = {
+    'Order ID': { number: data.order },
+    'Symbol': { rich_text: [{ text: { content: data.symbol || '' }}] },
+    'Action': { select: { name: data.action }},
+    'Balance': { number: data.balance },
+    'Profit': { number: data.profit || 0 },
+    'SL': { number: data.sl || 0 },
+    'TP': { number: data.tp || 0 },
+  };
 
-// Vercel API 핸들러
-export default async function handler(req, res) {
-    // CORS 설정: 모든 도메인에서 접근을 허용
-    res.setHeader('Access-Control-Allow-Origin', '*');  // 모든 도메인에서 접근 허용
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');  // 허용할 HTTP 메서드
-    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');  // 허용할 헤더
+  await notion.pages.create({
+    parent: { database_id: NOTION_DB_ID },
+    properties
+  });
+};
 
-    // OPTIONS 메서드 처리 (CORS 요청을 위해)
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    console.log('req.method => ', req.method);
-    console.log('req.body => ', req.body);
+// 메인 핸들러
+export default async (req, res) => {
+  try {
+    const { action, order, chat_id, ...rest } = req.body;
     
-    if (req.method == 'POST') {
-        console.log('Received request:', req.body); // 요청 로그
+    // 1. 텔레그램 메시지 전송
+    const message = createMessage(req.body);
+    const tgResponse = await axios.post(
+      `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`,
+      {
+        chat_id,
+        text: message,
+        parse_mode: 'Markdown',
+        reply_to_message_id: action === 'open' ? undefined : rest.parent_message_id
+      }
+    );
+    
+    // 2. Notion 업데이트
+    await updateNotion({
+      ...req.body,
+      telegram_msg_id: tgResponse.data.result.message_id
+    });
 
-        // 필수 필드 확인
-        const requiredFields = ['order', 'type', 'symbol', 'volume', 'price', 'profit'];
-        if (!requiredFields.every(field => field in req.body)) {
-            return res.status(400).json({ error: 'Invalid trade data structure' });
-        }
-
-        try {
-            // 텔레그램 메시지 생성 및 전송
-            const message = createTelegramMessage(req.body);
-            await sendTelegramNotification(message);
-
-            // 성공 응답
-            return res.json({ status: 'success', message: 'Trade data received and Telegram notification sent.' });
-        } catch (error) {
-            console.error('Error processing trade data:', error.stack);
-            return res.status(500).json({ error: 'Internal server error', details: error.message });
-        }
-    } else {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-}
+    // 3. 메시지 ID 반환 (오픈 액션 시)
+    res.status(200).json({
+      message_id: tgResponse.data.result.message_id
+    });
+    
+  } catch (error) {
+    console.error('Error:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
